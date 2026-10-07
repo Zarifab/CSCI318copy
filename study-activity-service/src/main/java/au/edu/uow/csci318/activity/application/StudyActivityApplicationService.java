@@ -7,6 +7,7 @@ import au.edu.uow.csci318.messaging.application.SnapshotSource;
 import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -33,7 +34,8 @@ public class StudyActivityApplicationService implements SnapshotSource {
   }
 
   @Transactional
-  public Response record(UUID ownerId, String authorization, CreateRequest request) {
+  public Response record(
+      UUID ownerId, String authorization, CreateRequest request, ZoneId timezone) {
     verify(authorization, request.subjectId());
     StudySession session =
         repo.save(
@@ -42,15 +44,20 @@ public class StudyActivityApplicationService implements SnapshotSource {
                 request.subjectId(),
                 request.durationMinutes(),
                 request.studyDate(),
-                request.description()));
+                request.description(),
+                LocalDate.now(timezone)));
     publish("StudySessionRecorded", session);
     return response(session);
   }
 
   @Transactional
-  public Response update(UUID ownerId, UUID id, UpdateRequest request) {
+  public Response update(UUID ownerId, UUID id, UpdateRequest request, ZoneId timezone) {
     StudySession session = find(ownerId, id);
-    session.edit(request.durationMinutes(), request.studyDate(), request.description());
+    session.edit(
+        request.durationMinutes(),
+        request.studyDate(),
+        request.description(),
+        LocalDate.now(timezone));
     repo.save(session);
     publish("StudySessionUpdated", session);
     return response(session);
@@ -69,15 +76,16 @@ public class StudyActivityApplicationService implements SnapshotSource {
     repo.delete(session);
   }
 
-  public List<Response> all(UUID ownerId) {
+  public List<Response> all(UUID ownerId, UUID subjectId) {
     return repo.findByOwnerIdOrderByStudyDateDescRecordedAtDesc(ownerId).stream()
+        .filter(session -> subjectId == null || session.getSubjectId().equals(subjectId))
         .map(this::response)
         .toList();
   }
 
-  public Summary summary(UUID ownerId, UUID subjectId, LocalDate weekOf) {
+  public Summary summary(UUID ownerId, UUID subjectId, LocalDate weekOf, ZoneId timezone) {
     LocalDate from =
-        (weekOf == null ? LocalDate.now() : weekOf)
+        (weekOf == null ? LocalDate.now(timezone) : weekOf)
             .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
     LocalDate to = from.plusDays(6);
     var sessions = repo.findByOwnerIdAndSubjectIdAndStudyDateBetween(ownerId, subjectId, from, to);

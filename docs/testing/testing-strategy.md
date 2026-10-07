@@ -7,6 +7,8 @@ Run `mvn clean verify` and `node --test frontend/tests/*.test.cjs`. Unit tests r
 - TopologyTestDriver executes the real Kafka Streams DSL with persisted state stores: duplicates, stale revisions, corrections, deletes, target changes, completed blocks, malformed facts and account isolation.
 - JPA slice tests verify outbox rollback/retry/migration and persistent projection revision guards.
 - Node tests cover authenticated fetch SSE, fragmented UTF-8 frames, multiline data, keepalives and cancellation.
+- Controller contract tests cover authenticated subject, assessment, activity and planning commands, including the browser timezone header.
+- Agent tests prove that generation cannot be approved until the LLM has called the required application tools and submitted a structured decision.
 
 ## Real broker integration
 

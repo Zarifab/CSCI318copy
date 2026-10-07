@@ -110,6 +110,10 @@ public class SubjectApplicationService {
     return response(confirmations.changeTarget(ownerId, id, minutes));
   }
 
+  public SubjectResponse update(UUID ownerId, UUID id, UpdateSubjectRequest request) {
+    return response(confirmations.update(ownerId, id, request));
+  }
+
   private ImportReview review(SubjectOutlineImport i, ExtractionResult r) {
     return new ImportReview(i.getId(), i.getFilename(), i.getStatus().name(), r);
   }

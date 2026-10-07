@@ -247,7 +247,7 @@ class PlanningStreamTopologyTest {
     subjects.pipeInput(
         "subject-key",
         event(
-            "SubjectTargetChanged",
+            "SubjectUpdated",
             "subject-service",
             owner,
             subject,

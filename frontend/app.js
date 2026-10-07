@@ -428,7 +428,7 @@ function render() {
   renderSystemStatus();
   renderDashboard();
   $('#subject-list').innerHTML = state.subjects.length
-    ? state.subjects.map(subject => `<article><p class="eyebrow">${esc(subject.code)}</p><h3>${esc(subject.name)}</h3><p>${subject.creditPoints ?? '—'} credit points</p><small>${subject.weeklyStudyTargetMinutes} min weekly target</small></article>`).join('')
+    ? state.subjects.map(subject => `<article><div class="subject-card-head"><p class="eyebrow">${esc(subject.code)}</p><button class="secondary edit-subject" type="button" data-id="${esc(subject.id)}">Edit</button></div><h3>${esc(subject.name)}</h3><p>${subject.creditPoints ?? '—'} credit points</p><small>${subject.weeklyStudyTargetMinutes} min weekly target</small></article>`).join('')
     : '<p>No subjects yet. Upload an outline to begin.</p>';
   $('#activity-subject').innerHTML = '<option value="">Choose subject</option>'
     + state.subjects.map(subject => `<option value="${esc(subject.id)}">${esc(subject.code)} — ${esc(subject.name)}</option>`).join('');
@@ -458,7 +458,26 @@ function render() {
   bindComplete();
   bindDeleteAssessments();
   bindEditAssessments();
+  bindEditSubjects();
   bindCalendarItems();
+}
+
+function bindEditSubjects() {
+  $$('.edit-subject:not([data-bound])').forEach(button => {
+    button.dataset.bound = 'true';
+    button.addEventListener('click', () => {
+      const subject = state.subjects.find(item => item.id === button.dataset.id);
+      if (!subject) return;
+      $('#subject-id').value = subject.id;
+      $('#subject-code').value = subject.code;
+      $('#subject-name').value = subject.name;
+      $('#subject-credit-points').value = subject.creditPoints ?? '';
+      $('#subject-weekly-target').value = subject.weeklyStudyTargetMinutes;
+      feedback('subject-dialog-feedback', '');
+      $('#subject-dialog').showModal();
+      $('#subject-name').focus();
+    });
+  });
 }
 
 function renderDashboard() {
@@ -641,6 +660,34 @@ $('#assessment-form').addEventListener('submit', async event => {
 });
 
 $('#assessment-filter').addEventListener('change', renderAssessments);
+
+$('#close-subject-dialog').addEventListener('click', () => $('#subject-dialog').close());
+$('#cancel-subject-dialog').addEventListener('click', () => $('#subject-dialog').close());
+$('#subject-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const button = event.submitter;
+  const id = $('#subject-id').value;
+  setBusy(button, true, 'Saving');
+  try {
+    await request(`${API.subjects}/subjects/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code: $('#subject-code').value.trim(),
+        name: $('#subject-name').value.trim(),
+        creditPoints: num($('#subject-credit-points').value),
+        weeklyStudyTargetMinutes: Number($('#subject-weekly-target').value)
+      })
+    });
+    $('#subject-dialog').close();
+    await load();
+    feedback('subject-feedback', 'Subject updated. Live progress will use the new weekly target.', 'success');
+  } catch (error) {
+    feedback('subject-dialog-feedback', error.message, 'error');
+  } finally {
+    setBusy(button, false);
+  }
+});
 
 function setSubjectMethod(method) {
   const uploading = method === 'upload';

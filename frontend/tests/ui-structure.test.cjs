@@ -30,3 +30,10 @@ test('profile and contributor content reflects the current requirements', () => 
 test('timezone helper loads before the application module', () => {
   assert.ok(index.indexOf('browser-timezone.js') < index.indexOf('type="module" src="app.js"'));
 });
+
+test('subjects expose a complete edit dialog', () => {
+  assert.match(index, /id="subject-dialog"/);
+  for (const field of ['subject-code', 'subject-name', 'subject-credit-points', 'subject-weekly-target']) {
+    assert.match(index, new RegExp(`id="${field}"`));
+  }
+});

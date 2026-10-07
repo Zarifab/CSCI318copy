@@ -26,7 +26,7 @@ public class EventDecoder {
           "StudySessionUpdated",
           "StudySessionDeleted");
   private static final Set<String> SUBJECT_TYPES =
-      Set.of("SubjectCreated", "SubjectSnapshot", "SubjectTargetChanged");
+      Set.of("SubjectCreated", "SubjectSnapshot", "SubjectUpdated", "SubjectTargetChanged");
   private final ObjectMapper json;
 
   public EventDecoder(ObjectMapper mapper) {

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class PlanningApplicationService {
   private final StudyPlanRepository plans;
   private final StudyPlanningAgent agent;
+  private final AgenticPlanningAdvisor advisor;
   private final PlanningTools tools;
   private final AvailabilityAssistant availabilityAssistant;
   private final ConfiguredPlanningChatModel configuredModel;
@@ -24,6 +26,7 @@ public class PlanningApplicationService {
   public PlanningApplicationService(
       StudyPlanRepository plans,
       StudyPlanningAgent agent,
+      AgenticPlanningAdvisor advisor,
       PlanningTools tools,
       AvailabilityAssistant availabilityAssistant,
       ConfiguredPlanningChatModel configuredModel,
@@ -31,6 +34,7 @@ public class PlanningApplicationService {
       ObjectMapper json) {
     this.plans = plans;
     this.agent = agent;
+    this.advisor = advisor;
     this.tools = tools;
     this.availabilityAssistant = availabilityAssistant;
     this.configuredModel = configuredModel;
@@ -39,8 +43,11 @@ public class PlanningApplicationService {
   }
 
   @Transactional
-  public PlanResponse generate(UUID ownerId, String authorization, PlanRequest request) {
+  public PlanResponse generate(
+      UUID ownerId, String authorization, ZoneId timezone, PlanRequest request) {
     validatePeriod(request);
+    AgenticPlanningAdvisor.Advice advice =
+        advisor.adviseGenerate(ownerId, authorization, timezone, request);
     StudyPlanningAgent.Schedule schedule = agent.generate(ownerId, request, authorization);
     validateItems(authorization, request, schedule.endDate(), schedule.items());
     try {
@@ -49,7 +56,7 @@ public class PlanningApplicationService {
               .findTopByOwnerIdOrderByCreatedAtDesc(ownerId)
               .map(existing -> existing.getVersion() + 1)
               .orElse(1);
-      String explanation = explanation(schedule, "Generated");
+      String explanation = explanation(schedule, "Generated", advice);
       StudyPlan saved =
           plans.save(
               new StudyPlan(
@@ -68,18 +75,27 @@ public class PlanningApplicationService {
 
   @Transactional
   public PlanResponse regenerate(
-      UUID ownerId, String authorization, UUID previousId, PlanRequest request) {
+      UUID ownerId,
+      String authorization,
+      ZoneId timezone,
+      UUID previousId,
+      PlanRequest request) {
     StudyPlan old =
         plans
             .findByIdAndOwnerId(previousId, ownerId)
             .orElseThrow(() -> new NoSuchElementException("Study plan not found"));
     validatePeriod(request);
+    AgenticPlanningAdvisor.Advice advice =
+        advisor.adviseRegenerate(ownerId, authorization, timezone, request, previousId);
     StudyPlanningAgent.Schedule schedule = agent.generate(ownerId, request, authorization);
     validateItems(authorization, request, schedule.endDate(), schedule.items());
     try {
       List<PlanItem> before = json.readValue(old.getItemsJson(), new TypeReference<>() {});
       String explanation =
-          explanation(schedule, "Regenerated") + " " + difference(before, schedule.items()) + ".";
+          explanation(schedule, "Regenerated", advice)
+              + " "
+              + difference(before, schedule.items())
+              + ".";
       StudyPlan saved =
           plans.save(
               new StudyPlan(
@@ -158,9 +174,18 @@ public class PlanningApplicationService {
     }
   }
 
-  private String explanation(StudyPlanningAgent.Schedule schedule, String verb) {
+  private String explanation(
+      StudyPlanningAgent.Schedule schedule,
+      String verb,
+      AgenticPlanningAdvisor.Advice advice) {
     String text =
-        verb
+        advice.provider()
+            + " agent used "
+            + String.join(", ", advice.toolsUsed())
+            + ". "
+            + advice.summary()
+            + " "
+            + verb
             + " a deadline plan through "
             + schedule.endDate()
             + ". Scheduled "

@@ -4,6 +4,7 @@ import au.edu.uow.csci318.subject.domain.Subject;
 import au.edu.uow.csci318.subject.domain.SubjectOutlineImport;
 import au.edu.uow.csci318.subject.dto.SubjectDtos.ConfirmImportRequest;
 import au.edu.uow.csci318.subject.dto.SubjectDtos.ManualSubjectRequest;
+import au.edu.uow.csci318.subject.dto.SubjectDtos.UpdateSubjectRequest;
 import java.util.NoSuchElementException;
 import java.util.UUID;
 import org.springframework.stereotype.Component;
@@ -111,6 +112,30 @@ public class SubjectConfirmationTransactions {
             .orElseThrow(() -> new NoSuchElementException("Subject not found"));
     subject.changeWeeklyStudyTarget(minutes);
     events.publish("SubjectTargetChanged", subject);
+    return subject;
+  }
+
+  @Transactional
+  public Subject update(UUID ownerId, UUID id, UpdateSubjectRequest request) {
+    Subject subject =
+        subjects
+            .subject(ownerId, id)
+            .orElseThrow(() -> new NoSuchElementException("Subject not found"));
+    subjects
+        .byCode(ownerId, request.code().trim().toUpperCase())
+        .filter(existing -> !existing.getId().equals(id))
+        .ifPresent(
+            existing -> {
+              throw new IllegalArgumentException(
+                  "A different subject already uses code " + request.code());
+            });
+    subject.changeDetails(
+        request.code(),
+        request.name(),
+        request.creditPoints(),
+        request.weeklyStudyTargetMinutes());
+    subjects.storeSubject(subject);
+    events.publish("SubjectUpdated", subject);
     return subject;
   }
 

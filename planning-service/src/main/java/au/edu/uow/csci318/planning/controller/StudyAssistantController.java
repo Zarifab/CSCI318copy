@@ -4,6 +4,7 @@ import au.edu.uow.csci318.planning.application.StudyAssistantService;
 import au.edu.uow.csci318.planning.dto.AssistantDtos.*;
 import au.edu.uow.csci318.planning.infrastructure.IdentityClient;
 import jakarta.validation.Valid;
+import java.time.ZoneId;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,7 +21,9 @@ public class StudyAssistantController {
 
     @PostMapping("/chat")
     public ChatResponse chat(@RequestHeader("Authorization") String authorization,
+                             @RequestHeader(value = "X-Study-Timezone", defaultValue = "UTC") String timezone,
                              @Valid @RequestBody ChatRequest request) {
-        return service.chat(identity.require(authorization), authorization, request);
+        return service.chat(
+                identity.require(authorization), authorization, request, ZoneId.of(timezone));
     }
 }
