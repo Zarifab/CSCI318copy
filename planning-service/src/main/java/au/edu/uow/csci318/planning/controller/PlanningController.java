@@ -5,6 +5,7 @@ import au.edu.uow.csci318.planning.dto.PlanningDtos.*;
 import au.edu.uow.csci318.planning.infrastructure.IdentityClient;
 import jakarta.validation.Valid;
 import java.util.UUID;
+import java.time.ZoneId;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -47,16 +48,20 @@ public class PlanningController {
   @ResponseStatus(HttpStatus.CREATED)
   public PlanResponse generate(
       @RequestHeader("Authorization") String authorization,
+      @RequestHeader(value = "X-Study-Timezone", defaultValue = "UTC") String timezone,
       @Valid @RequestBody PlanRequest request) {
-    return service.generate(identity.require(authorization), authorization, request);
+    return service.generate(
+        identity.require(authorization), authorization, ZoneId.of(timezone), request);
   }
 
   @PostMapping("/plans/{id}/regenerate")
   @ResponseStatus(HttpStatus.CREATED)
   public PlanResponse regenerate(
       @RequestHeader("Authorization") String authorization,
+      @RequestHeader(value = "X-Study-Timezone", defaultValue = "UTC") String timezone,
       @PathVariable("id") UUID id,
       @Valid @RequestBody PlanRequest request) {
-    return service.regenerate(identity.require(authorization), authorization, id, request);
+    return service.regenerate(
+        identity.require(authorization), authorization, ZoneId.of(timezone), id, request);
   }
 }

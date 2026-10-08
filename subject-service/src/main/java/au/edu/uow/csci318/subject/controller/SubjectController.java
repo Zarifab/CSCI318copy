@@ -70,6 +70,14 @@ public class SubjectController {
     return service.target(identity.require(auth), id, body.getOrDefault("minutes", -1));
   }
 
+  @PatchMapping("/subjects/{id}")
+  public SubjectResponse update(
+      @RequestHeader("Authorization") String auth,
+      @PathVariable UUID id,
+      @Valid @RequestBody UpdateSubjectRequest request) {
+    return service.update(identity.require(auth), id, request);
+  }
+
   @GetMapping("/ai/status")
   public AiStatus aiStatus(@RequestHeader("Authorization") String auth) {
     identity.require(auth);

@@ -42,18 +42,32 @@ public class StudySession {
 
   public StudySession(
       UUID ownerId, UUID subjectId, int minutes, LocalDate date, String description) {
+    this(ownerId, subjectId, minutes, date, description, LocalDate.now());
+  }
+
+  public StudySession(
+      UUID ownerId,
+      UUID subjectId,
+      int minutes,
+      LocalDate date,
+      String description,
+      LocalDate today) {
     this.id = UUID.randomUUID();
     this.ownerId = Objects.requireNonNull(ownerId);
     this.subjectId = Objects.requireNonNull(subjectId);
-    edit(minutes, date, description);
+    edit(minutes, date, description, today);
     this.recordedAt = Instant.now();
   }
 
   public void edit(int minutes, LocalDate date, String description) {
+    edit(minutes, date, description, LocalDate.now());
+  }
+
+  public void edit(int minutes, LocalDate date, String description, LocalDate today) {
     if (minutes <= 0 || minutes > 1440)
       throw new IllegalArgumentException("Study duration must be between 1 and 1440 minutes");
     LocalDate checkedDate = Objects.requireNonNull(date);
-    if (checkedDate.isAfter(LocalDate.now()))
+    if (checkedDate.isAfter(Objects.requireNonNull(today)))
       throw new IllegalArgumentException("Study date cannot be in the future");
     if (description == null || description.isBlank())
       throw new IllegalArgumentException("Activity description is required");

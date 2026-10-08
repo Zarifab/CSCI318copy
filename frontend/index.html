@@ -312,6 +312,18 @@
     </form>
   </dialog>
 
+  <dialog id="subject-dialog" class="calendar-dialog">
+    <form id="subject-form" method="dialog">
+      <div class="panel-head"><div><p class="eyebrow">SUBJECT</p><h2>Edit subject</h2></div><button id="close-subject-dialog" class="icon-button" type="button" aria-label="Close">×</button></div>
+      <input id="subject-id" type="hidden">
+      <div class="dialog-grid"><label>Subject code<input id="subject-code" maxlength="12" required placeholder="e.g. CSCI318"></label><label>Credit points<input id="subject-credit-points" type="number" min="1"></label></div>
+      <label>Subject name<input id="subject-name" maxlength="255" required></label>
+      <label>Weekly study target (minutes)<input id="subject-weekly-target" type="number" min="0" max="10080" required></label>
+      <div id="subject-dialog-feedback" class="feedback" aria-live="polite"></div>
+      <div class="dialog-actions dialog-actions-right"><span></span><button id="cancel-subject-dialog" class="secondary" type="button">Cancel</button><button class="primary" value="default">Save subject</button></div>
+    </form>
+  </dialog>
+
   <dialog id="calendar-dialog" class="calendar-dialog">
     <form id="calendar-form" method="dialog">
       <div class="panel-head"><div><p class="eyebrow">CALENDAR ITEM</p><h2 id="calendar-dialog-title">New study item</h2></div><button id="close-calendar-dialog" class="icon-button" type="button" aria-label="Close">×</button></div>

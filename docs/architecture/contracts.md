@@ -15,7 +15,9 @@
 | Subject | `GET /api/subject-outlines/{id}` | Retrieve review state |
 | Subject | `POST /api/subject-outlines/{id}/confirm` | Confirm corrected extraction |
 | Subject | `GET /api/subjects` | Subject overview |
+| Subject | `GET /api/subjects/{id}` | Retrieve one owned subject |
 | Subject | `POST /api/subjects` | Create a subject and optional assessments manually |
+| Subject | `PATCH /api/subjects/{id}` | Edit the subject code, name, credit points and weekly target |
 | Subject | `GET /api/ai/status` | Report the AI configuration visible to the running service |
 | Assessment | `POST /api/assessments/import` | Confirmed import contract |
 | Assessment | `GET /api/assessments?status=&subjectId=` | Ordered assessment overview |
@@ -26,14 +28,15 @@
 | Activity | `POST /api/study-sessions` | Record activity |
 | Activity | `PATCH /api/study-sessions/{id}` | Correct an owned study session |
 | Activity | `DELETE /api/study-sessions/{id}` | Remove an owned study session |
+| Activity | `GET /api/study-sessions?subjectId=` | Display all sessions or only those for a selected subject |
 | Activity | `GET /api/study-sessions/summary` | Weekly subject summary |
 | Planning | `GET /api/planning/workload` | Workload projection |
 | Planning | `GET /api/planning/this-week` | Coherent dashboard read model |
 | Planning | `GET /api/planning/dashboard/stream` | Authenticated SSE dashboard snapshots; token stays in Authorization header |
 | Planning | `GET /api/planning/stream-status` | Projection revision, initialization and latest update |
 | Planning | `GET /api/planning/progress/{subjectId}?weekOf=` | Locally projected weekly target, minutes and history totals |
-| Planning | `POST /api/planning/plans` | Generate and validate a plan |
-| Planning | `POST /api/planning/plans/{id}/regenerate` | Re-read state and version a plan |
+| Planning | `POST /api/planning/plans` | Run the LangChain4j tool loop, then generate and validate a plan |
+| Planning | `POST /api/planning/plans/{id}/regenerate` | Re-read state through tools and version a validated plan |
 | Planning | `POST /api/planning/availability/chat` | Convert natural-language availability into time slots |
 | Planning | `GET /api/planning/ai/status` | Report planning AI configuration |
 | Planning | `GET /api/calendar?from=&to=` | Profile-scoped monthly or weekly calendar range |
@@ -54,7 +57,7 @@ Version-2 envelopes contain UUID `eventId`, `eventType`, integer `eventVersion=2
 
 | Topic | Events |
 |---|---|
-| `subject-events` | `SubjectCreated`, `SubjectTargetChanged`, `SubjectSnapshot` |
+| `subject-events` | `SubjectCreated`, `SubjectUpdated`, `SubjectTargetChanged`, `SubjectSnapshot` |
 | `assessment-events` | `AssessmentCreated`, `AssessmentUpdated`, `AssessmentDeadlineChanged`, `AssessmentWorkloadChanged`, `AssessmentPriorityChanged`, `AssessmentCompleted`, `AssessmentDeleted`, `AssessmentSnapshot` |
 | `study-activity-events` | `StudySessionRecorded`, `StudySessionUpdated`, `StudySessionDeleted`, `StudySessionSnapshot` |
 | `planning-events` | `StudyBlockCompleted`, `StudyBlockDeleted`, `StudyBlockSnapshot` |
@@ -63,4 +66,4 @@ Version-2 envelopes contain UUID `eventId`, `eventType`, integer `eventVersion=2
 | `planning-rejected-events` | Metadata-only decoder rejection; no original payload |
 | `planning-workload-dlq`, `planning-progress-dlq` | Failed query-model sink delivery |
 
-Malformed, legacy owner-less and unsupported envelopes never enter query state. Duplicate/stale aggregate revisions are ignored. Projections are eventually consistent; query endpoints do not call upstream academic services. `X-Study-Timezone` supplies an IANA timezone (default UTC) for dashboard dates and completed-block history. SSE emits `event: dashboard` with `{week,stream}` JSON, heartbeats and periodic reconnection; the browser uses a bearer-authenticated fetch stream rather than URL tokens.
+Malformed, legacy owner-less and unsupported envelopes never enter query state. Duplicate/stale aggregate revisions are ignored. Projections are eventually consistent; query endpoints do not call upstream academic services. `X-Study-Timezone` supplies an IANA timezone (default UTC) for dashboard dates, activity validation, agent context and completed-block history. SSE emits `event: dashboard` with `{week,stream}` JSON, heartbeats and periodic reconnection; the browser uses a bearer-authenticated fetch stream rather than URL tokens.

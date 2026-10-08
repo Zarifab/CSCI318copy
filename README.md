@@ -5,8 +5,8 @@ Study Leftovers is a personal academic workspace that turns subject-outline docu
 ## What works
 
 - Up to 10 PDF, DOCX, JPG or JPEG outlines per batch, local text/OCR extraction, and a review queue before confirmation
-- LangChain4j/Gemini analysis of cleaned extracted text and AI-assisted planning, with optional OpenAI compatibility
-- manual subject and assessment entry when no document is available
+- LangChain4j/Gemini analysis of cleaned extracted text and tool-using agentic planning, with optional OpenAI compatibility
+- manual subject and assessment entry, plus later editing, when no document is available
 - five independently persisted Spring Boot services with clear data ownership
 - assessment and study-session domain events through Spring Cloud Stream and Kafka
 - two stateful Kafka Streams features: account workload and weekly subject progress, served from local read models and pushed live to the dashboard
@@ -35,9 +35,9 @@ Each service has its own file-backed H2 database. REST handles commands and imme
 
 ## Quick start
 
-Requirements: Docker Desktop. A Gemini key is recommended but optional.
+Requirements: Docker Desktop. A Gemini or OpenAI key is required for outline analysis, conversational availability, agentic plan generation and the study assistant; account, subject, assessment, activity, calendar and streaming features remain usable without one.
 
-On Windows, double-click **`Start-Study-Leftovers.cmd`**. The launcher creates the private `.env` file when needed, starts the entire application, and opens the website. Double-click **`Stop-Study-Leftovers.cmd`** when you want to stop it; account and study data remain saved.
+On Windows, double-click **`Start-Study-Leftovers.cmd`**. The launcher creates the private `.env` file when needed, starts the entire application, and opens the website. Double-click **`Stop-Study-Leftovers.cmd`** when you want to stop it. Named Docker volumes retain account, academic, planning and Kafka state across container recreation.
 
 The command-line equivalent is:
 
@@ -66,7 +66,7 @@ To enable Gemini-backed extraction and planning, set `GEMINI_API_KEY` in the pri
    GEMINI_MODEL=gemini-3.6-flash
    ```
 
-4. Back up existing container databases before an upgrade or recreation: the development Compose file does not mount persistent service database volumes. Ordinary Stop now stops containers without deleting them. A rebuild/configuration change can still recreate them. A browser refresh alone does not reload environment variables.
+4. Rebuild the services after changing `.env`. A browser refresh alone does not reload backend environment variables. Docker named volumes preserve the databases; `docker compose down -v` deliberately deletes them and should only be used when you want a clean reset.
 
    ```powershell
    docker compose up -d --build --force-recreate
@@ -107,7 +107,7 @@ Serve `frontend/` with any static server. The UI expects the documented localhos
 6. Mark a spaced-repetition block complete and check the next review in the monthly overview.
 7. Ask the Study Assistant for explanations or help breaking down the nearest assessment.
 
-The Postman collection in `postman/` includes query and command examples. IDs returned by earlier calls should be placed into the collection variables.
+The Postman collection in `postman/` is an ordered authenticated demonstration. It creates and captures its own account and IDs, exercises subject editing, produces the two Kafka-derived projections, and runs both agentic planning stories. The outline-upload request remains manual because Postman must be given a local file.
 
 ## Tests and evidence
 

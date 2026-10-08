@@ -61,6 +61,20 @@ public class Subject {
     eventRevision = Math.max(1, eventRevision) + 1;
   }
 
+  public void changeDetails(String code, String name, Integer creditPoints, int target) {
+    String nextCode = normaliseCode(code);
+    String nextName = requireText(name, "Subject name");
+    if (creditPoints != null && creditPoints <= 0)
+      throw new IllegalArgumentException("Credit points must be positive");
+    if (target < 0 || target > 10080)
+      throw new IllegalArgumentException("Weekly target must be between 0 and 10080 minutes");
+    this.code = nextCode;
+    this.name = nextName;
+    this.creditPoints = creditPoints;
+    this.weeklyStudyTargetMinutes = target;
+    this.eventRevision = Math.max(1, eventRevision) + 1;
+  }
+
   public long getEventRevision() {
     return Math.max(1, eventRevision);
   }

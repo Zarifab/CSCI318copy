@@ -2,7 +2,6 @@ package au.edu.uow.csci318.planning.application;
 
 import au.edu.uow.csci318.planning.dto.PlanningDtos.AiStatus;
 import dev.langchain4j.model.chat.ChatModel;
-import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,7 +47,6 @@ class ConfiguredPlanningChatModel {
                             .apiKey(geminiKey)
                             .modelName(geminiModel)
                             .temperature(0.0)
-                            .responseFormat(ResponseFormat.JSON)
                             .build()));
         }
         if ((provider.equals("auto") || provider.equals("openai")) && !openAiKey.isBlank()) {

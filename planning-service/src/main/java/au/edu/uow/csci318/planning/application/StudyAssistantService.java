@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,14 +27,16 @@ public class StudyAssistantService {
         this.json = json;
     }
 
-    public ChatResponse chat(UUID ownerId, String authorization, ChatRequest request) {
+    public ChatResponse chat(
+            UUID ownerId, String authorization, ChatRequest request, ZoneId timezone) {
         ConfiguredPlanningChatModel.Selection selection = configuredModel.selection()
                 .orElseThrow(() -> new IllegalStateException(
                         "The study assistant needs GEMINI_API_KEY or OPENAI_API_KEY in .env. Rebuild the Planning Service after adding it."));
         try {
             List<?> subjects = tools.getSubjects(authorization);
             List<?> assessments = tools.getIncompleteAssessments(authorization);
-            List<EntryResponse> schedule = calendar.list(ownerId, LocalDate.now(), LocalDate.now().plusDays(30));
+            LocalDate today = LocalDate.now(timezone);
+            List<EntryResponse> schedule = calendar.list(ownerId, today, today.plusDays(30));
             List<ChatMessage> history = request.history().stream()
                     .skip(Math.max(0, request.history().size() - 12L)).toList();
             String prompt = """
